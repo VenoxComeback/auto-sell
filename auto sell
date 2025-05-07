@@ -13,7 +13,7 @@ local GameEvents = ReplicatedStorage:WaitForChild("GameEvents")
 
 --// Flags
 local IsSelling = false
-local SellThreshold = 3 -- You can adjust this if needed 
+local SellThreshold = 20 -- You can adjust this if needed 
 
 --// Helper functions
 local function SellInventory()
