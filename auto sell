@@ -1,0 +1,75 @@
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local MarketplaceService = game:GetService("MarketplaceService")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local LocalPlayer = Players.LocalPlayer
+local Leaderstats = LocalPlayer:WaitForChild("leaderstats")
+local Backpack = LocalPlayer:WaitForChild("Backpack")
+local ShecklesCount = Leaderstats:WaitForChild("Sheckles")
+
+--// Events
+local GameEvents = ReplicatedStorage:WaitForChild("GameEvents")
+
+--// Flags
+local IsSelling = false
+local SellThreshold = 3 -- You can adjust this if needed 
+
+--// Helper functions
+local function SellInventory()
+    local Character = LocalPlayer.Character
+    if not Character then return end
+
+    local Previous = Character:GetPivot()
+    local PreviousSheckles = ShecklesCount.Value
+
+    if IsSelling then return end
+    IsSelling = true
+
+    Character:PivotTo(CFrame.new(62, 4, -26))
+
+    while task.wait() do
+        if ShecklesCount.Value ~= PreviousSheckles then break end
+        GameEvents.Sell_Inventory:FireServer()
+    end
+
+    Character:PivotTo(Previous)
+    task.wait(0.2)
+    IsSelling = false
+end
+
+local function GetInvCrops()
+    local Character = LocalPlayer.Character
+    local Crops = {}
+
+    local function CollectFrom(parent)
+        for _, item in parent:GetChildren() do
+            if item:FindFirstChild("Item_String") then
+                table.insert(Crops, item)
+            end
+        end
+    end
+
+    CollectFrom(Backpack)
+    CollectFrom(Character)
+
+    return Crops
+end
+
+--// Main loop
+task.spawn(function()
+    while task.wait(2) do
+        local Crops = GetInvCrops()
+        if #Crops >= SellThreshold then
+            SellInventory()
+        end
+    end
+end)
+
+-- Also sell if a crop enters backpack
+Backpack.ChildAdded:Connect(function()
+    local Crops = GetInvCrops()
+    if #Crops >= SellThreshold then
+        SellInventory()
+    end
+end)
